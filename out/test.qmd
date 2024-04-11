@@ -1,0 +1,177 @@
+---
+jupyter: python3
+---
+
+BANANA
+
+```{python}
+from itertools import chain
+
+sep = '&='
+a = ['key0', 'val0', 'val1', 'val2']
+
+sep.join(a)
+from itertools import zip_longest
+
+d1 = {'a':1, 'b':2, 'c':3}
+d2 = {'a':11, 'c':33}
+d3 = {'a':111}
+d4 = {'a':1111, 'b':2222}
+
+
+keys = d1.keys()
+
+eqns= [d1, d2, d3, d4]
+
+sep = ['&', ' ']
+sep
+```
+
+```{python}
+rows_elements = [list(chain(k, [item.get(k) for item in eqns])) for k in keys]
+rows_elements
+```
+
+```{python}
+wrapper = [None, ('=', ''), None, (r'\textcolor{gray}{', '}'), None]
+wrapper = [w if w is not None else (" ", " ") for w in wrapper]
+wrapper
+```
+
+```{python}
+[
+    "".join(
+        [
+            f"{f'{w[0]}{str(v)}{w[1]}' if v is not None else " "} {s}"
+            # print(type(w))
+            for v, s, w in zip_longest(r, sep, wrapper, fillvalue="")
+        ]
+    )
+    for r in rows_elements
+]
+```
+
+```{python}
+from IPython.display import Markdown
+
+a = Markdown('$x$')
+```
+
+```{python}
+a.data
+```
+
+```{python}
+from quarto_toolkit import *
+from pint_sympy import *
+
+u = unitregistry
+```
+
+```{python}
+from sympy import Ge
+
+a, b = symbols("a b")
+
+mdobj = Markdown("ciao")
+_d = {a: 1, "banana": 3, mdobj: 4, b: None, Ge(a / b, 1): None}
+
+_dd = {
+    a: "variabile",
+    "banana": "testo semplice $x=5/3$",
+    mdobj: verifica(1, 11, Le),
+}
+
+show_eqn([_d, _dd], col_wrap=[None, ("=", ""), ("&", "")], debug=True)
+```
+
+```{python}
+import pipe_command as pc
+from sympy import pi, S
+x, y,z, q, w = symbols('x y z q w')
+_d = {
+    x : -3.123456789,
+    y : pi,
+    z : x*y,
+    q : 12,
+    w : q*u.m,    
+}
+_d
+
+_v = { k: S(v) | pc.subs(_d) | pc.N for k,v in _d.items()}
+_v
+```
+
+```{python}
+show_eqn([_d, _v], mul_symbol=r'\,', environment='cases', debug=True, float_format='{:+.4f}')
+```
+
+```{python}
+re
+```
+
+```{python}
+import pipe_command as pc
+import sympy as sp
+x, y = sp.symbols('x_1 y_1')
+"x*y" | pc.parse_expr(local_dict=locals()|{'x': sp.Symbol('x2')})
+# "2*x*y" | pc.parse_expr(evaluate=True)
+# "3*x*y" | pc.parse_expr
+```
+
+```{python}
+x, z = sp.symbols('x333, z4')
+```
+
+```{python}
+"4*x*y" | pc.parse_expr(local_dict=locals())
+```
+
+```{python}
+from inspect import currentframe
+
+c = currentframe()
+c.f_locals
+```
+
+```{python}
+'x' in c.f_locals
+```
+
+```{python}
+x in c.f_locals.values()
+```
+
+```{python}
+x = symbols('x123')
+x
+```
+
+```{python}
+c.f_locals
+```
+
+```{python}
+escape_var('ciao', {'c': 'C'})
+```
+
+```{python}
+' x*y' | pc.parse_expr(local_dict=locals())
+```
+
+```{python}
+from pipe_command import *
+from sympy import symbols
+
+x, y = symbols('x1 y2')
+```
+
+```{python}
+'x*y*y' | parse_expr
+```
+
+```{python}
+x
+```
+
+
