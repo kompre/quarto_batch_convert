@@ -1,0 +1,11 @@
+*.code-workspace
+
+test.py
+
+__pycache__/*
+
+.venv
+
+test
+
+*egg-info
