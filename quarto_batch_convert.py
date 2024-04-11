@@ -13,6 +13,7 @@ def convert_file(input_path, output_path, prefix, keep_extension, file):
     if relative_path != '.':
         create_directory(output_path, relative_path)
     new_file_name, old_extension = os.path.splitext(os.path.basename(file))
+    new_file_name = new_file_name.replace(token, "")  # Replace the token with an empty string
     if keep_extension:
         new_file_path = os.path.join(output_path, relative_path, prefix + os.path.basename(file) + '.qmd')
     else:
