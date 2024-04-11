@@ -65,7 +65,7 @@ def convert_files(extension, token, input_path, prefix, keep_extension, output_p
     with concurrent.futures.ProcessPoolExecutor() as executor:
         futures = []
         for file in filtered_files:
-            future = executor.submit(convert_file, input_path, output_path, prefix, keep_extension, file)
+            future = executor.submit(convert_file, input_path, output_path, prefix, keep_extension, file, token)
             futures.append(future)
             
         for future in concurrent.futures.as_completed(futures):
