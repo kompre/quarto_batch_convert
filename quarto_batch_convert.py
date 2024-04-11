@@ -9,7 +9,8 @@ import concurrent.futures
 @click.option("-t", "--token", default="_", help="Token to filter file names (default: _)", show_default=True)
 @click.option("-d", "--directory", default=".", help="Working directory (default: current directory)", show_default=True)
 @click.option("-p", "--prefix", default="", help="Prefix to add to the new file name")
-def convert_files(extension, token, directory, prefix):
+@click.option("-k", "--keep-extension", is_flag=True, help="Keep the original extension as part of the filename")
+def convert_files(extension, token, directory, prefix, keep_extension):
     """
     Convert files with specified extension and filtered by token using Quarto.
     
@@ -32,7 +33,10 @@ def convert_files(extension, token, directory, prefix):
         futures = []
         for file in filtered_files:
             new_file_name, old_extension = os.path.splitext(file)
-            new_file_path = prefix + new_file_name + '.qmd'
+            if keep_extension:
+                new_file_path = prefix + file + '.qmd'
+            else:
+                new_file_path = prefix + new_file_name + '.qmd'
             future = executor.submit(subprocess.run, ['quarto', 'convert', file, '--output', new_file_path])
             futures.append(future)
             
