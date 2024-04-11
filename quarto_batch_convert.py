@@ -8,7 +8,7 @@ def create_directory(output_path, relative_path):
     directory_path = os.path.join(output_path, relative_path)
     os.makedirs(directory_path, exist_ok=True)
 
-def convert_file(input_path, output_path, prefix, keep_extension, file):
+def convert_file(input_path, output_path, prefix, keep_extension, file, token):
     relative_path = os.path.relpath(os.path.dirname(file), input_path)
     if relative_path != '.':
         create_directory(output_path, relative_path)
