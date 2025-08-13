@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 
 [[package]]
@@ -77,8 +77,8 @@ wheels = [
 
 [[package]]
 name = "quarto-batch-convert"
-version = "2025.8.0"
-source = { virtual = "." }
+version = "2025.8.2"
+source = { editable = "." }
 dependencies = [
     { name = "click" },
 ]

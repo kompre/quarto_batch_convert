@@ -2,7 +2,7 @@ import os
 import shutil
 import pytest
 from click.testing import CliRunner
-from quarto_batch_convert.quarto_batch_convert import convert_files, convert_file, create_directory
+from quarto_batch_convert.quarto_batch_convert import convert_files
 import glob
 
 # Use a temporary directory for all tests

@@ -185,4 +185,6 @@ def convert_files(ctx, input_paths, qmd_to_ipynb, match_replace_pattern, prefix,
     print("-" * len(text))
     print(text)
     print("-" * len(text))
-P
+
+if __name__ == "__main__":
+    convert_files(["src/tests", r"--match-replace-pattern", "^_", "-q", "-r"])
