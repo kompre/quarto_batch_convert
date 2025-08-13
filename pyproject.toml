@@ -9,6 +9,12 @@ dependencies = [
     "ipython==8.23.0",
 ]
 
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+]
+
 [project.scripts]
-quarto-batch-convert = "quarto_batch_convert:convert_files"
-qbc = "quarto_batch_convert:convert_files"
+quarto-batch-convert = "quarto_batch_convert.quarto_batch_convert:convert_files"
+qbc = "quarto_batch_convert.quarto_batch_convert:convert_files"

@@ -37,7 +37,7 @@ Replace `<input_paths>` with one or more directory paths, file paths, or glob pa
 
 ### Options
 
-* `-e`, `--extension`: File extension to filter files when input is a directory (default: `.ipynb`)
+* `-q`, `--qmd-to-ipynb`: Convert `.qmd` files to `.ipynb` files (default: `.ipynb` to `.qmd`)
 * `-m`, `--match-replace-pattern`: Match pattern and optional replace pattern, separated by a forward slash. If no slash is present, only matching is performed.
 * `-p`, `--prefix`: Prefix to add to the new file name
 * `-k`, `--keep-extension`: Keep the original extension as part of the filename

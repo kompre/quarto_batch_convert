@@ -16,7 +16,7 @@ def create_directory(output_path, relative_path):
     directory_path = os.path.join(output_path, relative_path)
     os.makedirs(directory_path, exist_ok=True)
 
-def convert_file(input_path, output_path, prefix, keep_extension, file, match_pattern, replace_pattern):
+def convert_file(input_path, output_path, prefix, keep_extension, file, match_pattern, replace_pattern, output_extension):
     """Convert a file from ipynb to qmd using Quarto.
 
     Parameters:
@@ -25,8 +25,8 @@ def convert_file(input_path, output_path, prefix, keep_extension, file, match_pa
     prefix (str): The prefix to add to the new file name.
     keep_extension (bool): Whether to keep the original extension as part of the filename.
     file (str): The full path of the file to be converted.
-    match_pattern (str): The regex pattern to match filenames. If replace pattern is provided, the match will be replaced.
-    replace_pattern (str): The replacement pattern for the match. If None, the match will not be replaced.
+    match_pattern (str): The regex pattern to match filenames.
+    replace_pattern (str, optional): The replacement pattern for the match. Defaults to None.
     """
     relative_path = os.path.relpath(os.path.dirname(file), input_path)
     if relative_path != '.':
@@ -35,26 +35,32 @@ def convert_file(input_path, output_path, prefix, keep_extension, file, match_pa
     new_file_name, _ = os.path.splitext(os.path.basename(file))
 
     # Apply regex replacement if both patterns are provided
-    if match_pattern and replace_pattern:
+    if match_pattern and replace_pattern is not None:
         new_file_name = re.sub(match_pattern, replace_pattern, new_file_name)
 
     if keep_extension:
-        new_file_path = os.path.join(output_path, relative_path, prefix + os.path.basename(file) + '.qmd')
+        new_file_path = os.path.join(output_path, relative_path, prefix + os.path.basename(file) + output_extension)
     else:
-        new_file_path = os.path.join(output_path, relative_path, prefix + new_file_name + '.qmd')
+        new_file_path = os.path.join(output_path, relative_path, prefix + new_file_name + output_extension)
 
     subprocess.run(['quarto', 'convert', file, '--output', new_file_path])
 
 @click.command()
 @click.argument("input_paths", nargs=-1, required=True)
-@click.option("-e", "--extension", default=".ipynb", help="File extension to filter files when input is a directory (default: .ipynb)", show_default=True)
-@click.option("-mrp", "--match-replace-pattern", nargs=2, help="Match pattern (and optional replace pattern). Usage: -mrp MATCH or -mrp MATCH REPLACE")
+@click.option("-q", "--qmd-to-ipynb", is_flag=True, help="Convert .qmd files to .ipynb files (default: .ipynb to .qmd)")
+@click.option(
+    "-m",
+    "--match-replace-pattern",
+    metavar="MATCH/REPLACE",
+    help="Match pattern and optional replace pattern, separated by a forward slash. "
+         "If no slash is present, only matching is performed."
+)
 @click.option("-p", "--prefix", default="", help="Prefix to add to the new file name")
 @click.option("-k", "--keep-extension", is_flag=True, help="Keep the original extension as part of the filename")
 @click.option("-o", "--output-path", default=None, help="Output path where to generate the .qmd files (default: current directory)")
 @click.option("-r", "--recursive", is_flag=True, help="Search files recursively when input is a directory")
 @click.pass_context
-def convert_files(ctx, input_paths, extension, match_replace_pattern, prefix, keep_extension, output_path, recursive):
+def convert_files(ctx, input_paths, qmd_to_ipynb, match_replace_pattern, prefix, keep_extension, output_path, recursive):
     """
     Convert files with specified extension and filtered by regex pattern using Quarto.
     
@@ -63,29 +69,29 @@ def convert_files(ctx, input_paths, extension, match_replace_pattern, prefix, ke
                  - qbc .
                  - qbc file1.ipynb file2.ipynb
                  - qbc "*.ipynb" 
-                 - qbc notebooks/ "*.py" specific_file.ipynb
+                 - qbc notebooks/ specific_file.ipynb
                  - qbc "notebooks/**/*.ipynb"
     
     Options:
-        extension (str): File extension to filter files when input is a directory (default: .ipynb).
+        qmd_to_ipynb (bool): Convert .qmd files to .ipynb files (default: .ipynb to .qmd)
         match_replace_pattern: Match pattern (and optional replace). Use once for match only, twice for match+replace.
         prefix (str): Prefix to add to the new file name.
         keep_extension (bool): Whether to keep the original extension as part of the filename.
         output_path (str): Output path where to generate the .qmd files (default: current directory).
         recursive (bool): Search files recursively when input is a directory.
     """
+    # determinate output extension (ipynb->qmd, qmd->ipynb)
+    input_extension = ".ipynb" if not qmd_to_ipynb else ".qmd"
+    output_extension = ".qmd" if not qmd_to_ipynb else ".ipynb"
+    
     # Parse match-replace-pattern arguments
     match_regex = replace_pattern = None
     
     if match_replace_pattern:
-        if len(match_replace_pattern) == 1:
-            match_regex = match_replace_pattern[0]
-            replace_pattern = None  # Only filtering, no replacement
-        elif len(match_replace_pattern) == 2:
-            match_regex, replace_pattern = match_replace_pattern
+        if "/" in match_replace_pattern:
+            match_regex, replace_pattern = match_replace_pattern.split("/", 1)
         else:
-            click.echo("Error: --match-replace-pattern accepts 1 argument (match only) or 2 arguments (match and replace)")
-            ctx.exit(1)
+            match_regex = match_replace_pattern
         
         # Validate the regex pattern
         try:
@@ -124,9 +130,9 @@ def convert_files(ctx, input_paths, extension, match_replace_pattern, prefix, ke
                 # Directory handling - use existing logic
                 if recursive:
                     for root, _, filenames in os.walk(path):
-                        files.extend([os.path.join(root, filename) for filename in filenames if filename.endswith(extension)])
+                        files.extend([os.path.join(root, filename) for filename in filenames if filename.endswith(input_extension)])
                 else:
-                    files.extend([os.path.join(path, file) for file in os.listdir(path) if file.endswith(extension)])
+                    files.extend([os.path.join(path, file) for file in os.listdir(path) if file.endswith(input_extension)])
                     
     # Check if any files were found    
     if not files:
@@ -140,7 +146,7 @@ def convert_files(ctx, input_paths, extension, match_replace_pattern, prefix, ke
         os.makedirs(output_path, exist_ok=True)
     
     # Remove duplicates and ensure all files exist
-    files = list(set([f for f in files if os.path.isfile(f) and f.endswith(extension)]))
+    files = list(set([f for f in files if os.path.isfile(f) and f.endswith(input_extension)]))
     
     # Filter files by regex pattern if provided
     if match_regex:
@@ -167,7 +173,7 @@ def convert_files(ctx, input_paths, extension, match_replace_pattern, prefix, ke
     with concurrent.futures.ProcessPoolExecutor() as executor:
         futures = []
         for file in files:
-            future = executor.submit(convert_file, base_input_path, output_path, prefix, keep_extension, file, match_regex, replace_pattern)
+            future = executor.submit(convert_file, base_input_path, output_path, prefix, keep_extension, file, match_regex, replace_pattern, output_extension)
             futures.append(future)
             
         for future in concurrent.futures.as_completed(futures):
@@ -181,4 +187,4 @@ def convert_files(ctx, input_paths, extension, match_replace_pattern, prefix, ke
     print("-" * len(text))
 
 if __name__ == "__main__":
-    convert_files()
+    convert_files(["tests", r"--match-replace-pattern", "^_", "-q"])
