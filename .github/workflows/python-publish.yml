@@ -62,14 +62,14 @@ jobs:
     # Dedicated environments with protections for publishing are strongly recommended.
     # For more information, see: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-protection-rules
     environment:
-      name: testpypi
+      name: pypi
       # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
-      url: https://test.pypi.org/p/quarto-batch-convert
+      url: https://pypi.org/p/quarto-batch-convert
       
 
       # ALTERNATIVE: if your GitHub Release name is the PyPI project version string
       # ALTERNATIVE: exactly, uncomment the following line instead:
-      # url: https://test.pypi.org/project/quarto-batch-convert/${{ github.event.release.name }}
+
 
     steps:
       - name: Retrieve release distributions
