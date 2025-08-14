@@ -44,7 +44,7 @@ jobs:
       
       - name: Build wheel
         run: uv build
-        
+
       - name: Upload distributions
         uses: actions/upload-artifact@v4
         with:
@@ -64,11 +64,12 @@ jobs:
     environment:
       name: testpypi
       # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
-      # url: https://pypi.org/p/YOURPROJECT
-      #
+      url: https://pypi.org/p/quarto-batch-convert
+      
+      
       # ALTERNATIVE: if your GitHub Release name is the PyPI project version string
       # ALTERNATIVE: exactly, uncomment the following line instead:
-      url: https://test.pypi.org/project/quarto-batch-convert/${{ github.event.release.name }}
+      # url: https://test.pypi.org/project/quarto-batch-convert/${{ github.event.release.name }}
 
     steps:
       - name: Retrieve release distributions
