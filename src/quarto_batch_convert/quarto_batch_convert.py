@@ -6,7 +6,7 @@ import concurrent.futures
 import glob
 import re
 
-from .version import __version__
+from .uversion import __version__
 
 def create_directory(output_path, relative_path):
     """Create the directory at the given path if it doesn't exist.
