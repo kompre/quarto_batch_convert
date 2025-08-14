@@ -64,9 +64,9 @@ jobs:
     environment:
       name: testpypi
       # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
-      url: https://pypi.org/p/quarto-batch-convert
+      url: https://test.pypi.org/p/quarto-batch-convert
       
-      
+
       # ALTERNATIVE: if your GitHub Release name is the PyPI project version string
       # ALTERNATIVE: exactly, uncomment the following line instead:
       # url: https://test.pypi.org/project/quarto-batch-convert/${{ github.event.release.name }}
