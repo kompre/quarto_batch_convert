@@ -6,6 +6,8 @@ import concurrent.futures
 import glob
 import re
 
+from .version import __version__
+
 def create_directory(output_path, relative_path):
     """Create the directory at the given path if it doesn't exist.
     
@@ -59,6 +61,7 @@ def convert_file(input_path, output_path, prefix, keep_extension, file, match_pa
 @click.option("-k", "--keep-extension", is_flag=True, help="Keep the original extension as part of the filename")
 @click.option("-o", "--output-path", default=None, help="Output path where to generate the .qmd files (default: current directory)")
 @click.option("-r", "--recursive", is_flag=True, help="Search files recursively when input is a directory")
+@click.version_option(version=__version__, prog_name="Quarto Batch Converter")
 @click.pass_context
 def convert_files(ctx, input_paths, qmd_to_ipynb, match_replace_pattern, prefix, keep_extension, output_path, recursive):
     """
@@ -187,4 +190,4 @@ def convert_files(ctx, input_paths, qmd_to_ipynb, match_replace_pattern, prefix,
     print("-" * len(text))
 
 if __name__ == "__main__":
-    convert_files(["src/tests", r"--match-replace-pattern", "^_", "-q", "-r"])
+    convert_files(["tests", r"--match-replace-pattern", "^_", "-q", "-r"])
