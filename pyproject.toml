@@ -18,6 +18,7 @@ classifiers = [
 [dependency-groups]
 dev = [
     "pytest>=8.4.1",
+    "quarto-cli>=1.7.33",
 ]
 
 [project.scripts]
