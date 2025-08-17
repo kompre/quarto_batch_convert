@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import time
 import click
@@ -7,6 +8,16 @@ import glob
 import re
 
 from .version import __version__
+
+def check_quarto_installation():
+    """
+    Check if Quarto CLI is installed.
+    """
+    if not shutil.which('quarto'):
+        print("Error: Quarto CLI is not installed. Please install it before running this command.")
+        print("See https://quarto.org/docs/get-started/ for installation instructions")
+        print("or install from PYPI using `pipx install quarto-cli` or `uv tool install quarto-cli`")
+        exit(1)
 
 def create_directory(output_path, relative_path):
     """Create the directory at the given path if it doesn't exist.
@@ -83,6 +94,9 @@ def convert_files(ctx, input_paths, qmd_to_ipynb, match_replace_pattern, prefix,
         output_path (str): Output path where to generate the .qmd files (default: current directory).
         recursive (bool): Search files recursively when input is a directory.
     """
+    # check that `quarto` is installed
+    check_quarto_installation()
+    
     # determinate output extension (ipynb->qmd, qmd->ipynb)
     input_extension = ".ipynb" if not qmd_to_ipynb else ".qmd"
     output_extension = ".qmd" if not qmd_to_ipynb else ".ipynb"
