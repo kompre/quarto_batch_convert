@@ -1,4 +1,0 @@
----
-title: Banana
-jupyter: python3
----

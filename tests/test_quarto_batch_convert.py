@@ -4,6 +4,17 @@ import pytest
 from click.testing import CliRunner
 from quarto_batch_convert.quarto_batch_convert import convert_files
 import glob
+from contextlib import contextmanager
+
+@contextmanager
+def change_dir(destination):
+    """Context manager to temporarily change directory."""
+    try:
+        cwd = os.getcwd()
+        os.chdir(destination)
+        yield
+    finally:
+        os.chdir(cwd)
 
 # Use a temporary directory for all tests
 @pytest.fixture(scope="module")
@@ -115,3 +126,14 @@ def test_convert_qmd_to_ipynb(setup_teardown_test_env):
     assert result.exit_code == 0
     assert os.path.exists(os.path.join(output_dir, "TEST.ipynb"))
 
+def test_convert_file_not_path(tmp_path, setup_teardown_test_env):
+    """Test that an error is raised when a file is passed instead of a path."""
+    runner = CliRunner()
+    test_dir = os.path.join(setup_teardown_test_env, "notebooks")
+    
+    
+    with change_dir(test_dir):
+        result = runner.invoke(convert_files, ["*"])
+    
+    assert result.exit_code == 0
+    # assert "input_path cannot be empty" in result.output

@@ -41,7 +41,8 @@ def convert_file(input_path, output_path, prefix, keep_extension, file, match_pa
     match_pattern (str): The regex pattern to match filenames.
     replace_pattern (str, optional): The replacement pattern for the match. Defaults to None.
     """
-    relative_path = os.path.relpath(os.path.dirname(file), input_path)
+    dirname = os.path.dirname(file)
+    relative_path = os.path.relpath(dirname, input_path) if dirname else input_path
     if relative_path != '.':
         create_directory(output_path, relative_path)
 
@@ -204,4 +205,4 @@ def convert_files(ctx, input_paths, qmd_to_ipynb, match_replace_pattern, prefix,
     print("-" * len(text))
 
 if __name__ == "__main__":
-    convert_files(["tests", r"--match-replace-pattern", "^_", "-q", "-r"])
+    pass
