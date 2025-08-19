@@ -56,6 +56,10 @@ def convert_file(input_path, output_path, prefix, keep_extension, file, match_pa
         new_file_path = os.path.join(output_path, relative_path, prefix + os.path.basename(file) + output_extension)
     else:
         new_file_path = os.path.join(output_path, relative_path, prefix + new_file_name + output_extension)
+    
+    # Create the directory if it doesn't exist
+    new_file_dirname = os.path.dirname(new_file_path)
+    os.makedirs(new_file_dirname, exist_ok=True)
 
     subprocess.run(['quarto', 'convert', file, '--output', new_file_path])
 
@@ -90,9 +94,9 @@ def convert_files(ctx, input_paths, qmd_to_ipynb, match_replace_pattern, prefix,
     Options:
         qmd_to_ipynb (bool): Convert .qmd files to .ipynb files (default: .ipynb to .qmd)
         match_replace_pattern: Match pattern (and optional replace). Use once for match only, twice for match+replace.
-        prefix (str): Prefix to add to the new file name.
+        prefix (str): Prefix to add to the new file name. Can be used to specify new folder relative to input files.
         keep_extension (bool): Whether to keep the original extension as part of the filename.
-        output_path (str): Output path where to generate the .qmd files (default: current directory).
+        output_path (str): Output path where to generate the .qmd files (default: current directory). Relative to working directory.
         recursive (bool): Search files recursively when input is a directory.
     """
     # check that `quarto` is installed
@@ -130,28 +134,30 @@ def convert_files(ctx, input_paths, qmd_to_ipynb, match_replace_pattern, prefix,
             click.echo(f"Warning: No files or directories found matching '{input_path}'")
             continue
         
-        for path in expanded_paths:
-            if not os.path.exists(path):
-                click.echo(f"Warning: Path '{path}' does not exist")
-                continue
+        # filter the files with the correct extension
+        files.extend(
+                [
+                    path
+                    for path in expanded_paths
+                    if os.path.isfile(path) and path.endswith(input_extension)
+                ]
+            )
+        
+        # filter the directories
+        dirs = [
+            path
+            for path in expanded_paths
+            if os.path.isdir(path)
+        ]
                 
-            if os.path.isfile(path):
-                files.append(path)
-                # Set base_input_path to the directory of the first file if not set to a specific directory
-                if base_input_path == "." and len(input_paths) == 1 and len(expanded_paths) == 1:
-                    base_input_path = os.path.dirname(path) or "."
-            elif os.path.isdir(path):
-                # For directories, use the first directory as base_input_path
-                if base_input_path == ".":
-                    base_input_path = path
-                
-                # Directory handling - use existing logic
-                if recursive:
-                    for root, _, filenames in os.walk(path):
-                        files.extend([os.path.join(root, filename) for filename in filenames if filename.endswith(input_extension)])
-                else:
-                    files.extend([os.path.join(path, file) for file in os.listdir(path) if file.endswith(input_extension)])
-                    
+        # Directory handling - use existing logic
+        for path in dirs:
+            if recursive:
+                for root, _, filenames in os.walk(path):
+                    files.extend([os.path.join(root, filename) for filename in filenames if filename.endswith(input_extension)])
+            else:
+                files.extend([os.path.join(path, file) for file in os.listdir(path) if file.endswith(input_extension)])
+                        
     # Check if any files were found    
     if not files:
         click.echo("Error: No files found to process")

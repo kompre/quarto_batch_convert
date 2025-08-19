@@ -64,15 +64,17 @@ def test_match_and_replace_pattern(setup_teardown_test_env):
     test_dir = setup_teardown_test_env
     output_dir = os.path.join(test_dir, "output")
     
-    result = runner.invoke(convert_files, [test_dir, "--recursive", "-o", output_dir, "-m", "^_/REPLACED_"])
+    input_file = os.path.join(test_dir, "notebooks/_test_1.ipynb")
+    
+    result = runner.invoke(convert_files, [input_file, "-o", output_dir, "-m", "^_/REPLACED_"])
     
     assert result.exit_code == 0
-    assert os.path.exists(os.path.join(output_dir, "notebooks", "REPLACED_test_1.qmd"))
+    assert os.path.exists(os.path.join(output_dir, os.path.dirname(input_file), "REPLACED_test_1.qmd"))
     
     # Check that other files were not renamed
-    assert not os.path.exists(os.path.join(output_dir, "notebooks", "test_2.qmd"))
-    assert not os.path.exists(os.path.join(output_dir, "notebooks", "archive_test_3.qmd"))
-    assert not os.path.exists(os.path.join(output_dir, "notebooks", "_test_1.qmd"))
+    assert not os.path.exists(os.path.join(output_dir, os.path.dirname(input_file), "test_2.qmd"))
+    assert not os.path.exists(os.path.join(output_dir, os.path.dirname(input_file), "archive_test_3.qmd"))
+    assert not os.path.exists(os.path.join(output_dir, os.path.dirname(input_file), "_test_1.qmd"))
 
 def test_invalid_regex_pattern():
     """Test that an invalid regex pattern raises an error."""
@@ -96,38 +98,42 @@ def test_prefix_option(setup_teardown_test_env):
     """Test that the --prefix option adds the prefix correctly."""
     runner = CliRunner()
     test_dir = setup_teardown_test_env
-    output_dir = os.path.join(test_dir, "output")
     
-    result = runner.invoke(convert_files, [test_dir, "-p", "prefix_", "-o", output_dir, "-r"])
+    input_file = os.path.join(test_dir, "notebooks/_test_1.ipynb")
+    result = runner.invoke(convert_files, [input_file, "-p", "prefix_"])
     
     assert result.exit_code == 0
-    assert os.path.exists(os.path.join(output_dir, "notebooks", "prefix_test_2.qmd"))
+    assert os.path.exists(os.path.join(test_dir, "notebooks/prefix__test_1.qmd"))
     
 def test_keep_extension_option(setup_teardown_test_env):
     """Test that the --keep-extension flag keeps the original extension."""
     runner = CliRunner()
     test_dir = setup_teardown_test_env
-    output_dir = os.path.join(test_dir, "output")
     
-    result = runner.invoke(convert_files, [os.path.join(test_dir, "file_in_root.ipynb"), "-k", "-o", output_dir])
+    input_file = os.path.join(test_dir, "file_in_root.ipynb")
+    
+    result = runner.invoke(convert_files, [input_file, "-k"])
     
     assert result.exit_code == 0
-    assert os.path.exists(os.path.join(output_dir, "file_in_root.ipynb.qmd"))
+    assert os.path.exists(os.path.join(os.path.dirname(input_file), "file_in_root.ipynb.qmd"))
     
 def test_convert_qmd_to_ipynb(setup_teardown_test_env):
     """Test converting a qmd file to an ipynb file."""
     runner = CliRunner()
     test_dir = setup_teardown_test_env
     input_file = os.path.join(test_dir, "notebooks", "TEST.qmd")
-    output_dir = os.path.join(test_dir, "output")
 
-    result = runner.invoke(convert_files, [input_file, "-o", output_dir, "-q"])
+    result = runner.invoke(convert_files, [input_file, "-q"])
     
     assert result.exit_code == 0
-    assert os.path.exists(os.path.join(output_dir, "TEST.ipynb"))
+    assert os.path.exists(os.path.join(os.path.dirname(input_file), "TEST.ipynb"))
 
-def test_convert_file_not_path(tmp_path, setup_teardown_test_env):
-    """Test that an error is raised when a file is passed instead of a path."""
+def test_file_in_cwd(setup_teardown_test_env):    
+    """
+    Test that when a glob pattern is used as input, the command runs without errors.
+
+    This test also verifies that the command can be run from the same directory as the files to be converted.
+    """
     runner = CliRunner()
     test_dir = os.path.join(setup_teardown_test_env, "notebooks")
     
@@ -137,3 +143,43 @@ def test_convert_file_not_path(tmp_path, setup_teardown_test_env):
     
     assert result.exit_code == 0
     # assert "input_path cannot be empty" in result.output
+    
+def test_prefix_to_new_dir(setup_teardown_test_env):
+    """Test that the --prefix option creates the new directory."""
+    runner = CliRunner()
+    test_dir = setup_teardown_test_env
+    
+    input_file = os.path.join(test_dir, "notebooks/_test_1.ipynb")
+    input_prefix = "PREFIX/"
+    result = runner.invoke(convert_files, [input_file, "-p", input_prefix])
+    file_name, _ = os.path.splitext(os.path.basename(input_file))
+    
+    assert result.exit_code == 0
+    assert os.path.exists(os.path.join(os.path.dirname(input_file), input_prefix, file_name + ".qmd"))
+
+def test_prefix_to_nested_dir(setup_teardown_test_env):
+    """Test that the --prefix option creates nested directories."""
+    runner = CliRunner()
+    test_dir = setup_teardown_test_env
+    
+    input_file = os.path.join(test_dir, "notebooks/_test_1.ipynb")
+    input_prefix = "../PREFIX/"
+    result = runner.invoke(convert_files, [input_file, "-p", input_prefix])
+    file_name, _ = os.path.splitext(os.path.basename(input_file))
+    
+    assert result.exit_code == 0
+    assert os.path.exists(os.path.join(os.path.dirname(input_file), input_prefix, file_name + ".qmd"))
+    
+def test_output_path(setup_teardown_test_env):
+    """Test that the --output-path option creates the output directory."""
+    runner = CliRunner()
+    test_dir = setup_teardown_test_env
+    output_dir = os.path.join(test_dir, "output")
+    
+    input_file = os.path.join(test_dir, "notebooks/_test_1.ipynb")
+    result = runner.invoke(convert_files, [input_file, "-o", output_dir])
+    
+    file_name, _ = os.path.splitext(os.path.basename(input_file))
+    
+    assert result.exit_code == 0
+    assert os.path.exists(os.path.join(output_dir, os.path.dirname(input_file), file_name + ".qmd"))
