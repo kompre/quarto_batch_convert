@@ -1,5 +1,6 @@
 from quarto_batch_convert.quarto_batch_convert import convert_files
 import os
+import glob
 
 def change_dir():
     os.chdir("tests/assets")
@@ -11,11 +12,14 @@ def is_recursive():
     )
 
 def simple_run():
+    # files = glob.glob("C:/Users/s.follador/Desktop/__canc__/qbc/**/*.ipynb", recursive=True)
+    files = ["C:/Users/s.follador/Desktop/__canc__/qbc/**/*"]
     convert_files(
         [
-            r'C:\Users\s.follador\Desktop\__canc__', '-r', '-p', 'OUT/', 
+            *files
         ]
     )
+
 
 
 

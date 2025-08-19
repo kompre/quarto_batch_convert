@@ -48,7 +48,9 @@ def test_single_match_no_replace(setup_teardown_test_env):
     runner = CliRunner()
     test_dir = setup_teardown_test_env
     
-    result = runner.invoke(convert_files, [test_dir, "-m", "test_2", "-r"])
+    input_files = glob.glob(test_dir + "/**/*", recursive=True)
+    
+    result = runner.invoke(convert_files, [*input_files, "-m", "test_2"])
     
     assert result.exit_code == 0
     assert "test_2.ipynb" in result.output
@@ -89,7 +91,9 @@ def test_no_match_found(setup_teardown_test_env):
     runner = CliRunner()
     test_dir = setup_teardown_test_env
     
-    result = runner.invoke(convert_files, [test_dir, "-m", "non_existent_pattern"])
+    input_files = glob.glob(test_dir + "/**/*", recursive=True)
+    
+    result = runner.invoke(convert_files, [*input_files, "-m", "non_existent_pattern"])
     
     assert result.exit_code != 0
     assert "No files found matching the regex pattern" in result.output
@@ -139,7 +143,8 @@ def test_file_in_cwd(setup_teardown_test_env):
     
     
     with change_dir(test_dir):
-        result = runner.invoke(convert_files, ["*"])
+        input_files = glob.glob("*", recursive=True)
+        result = runner.invoke(convert_files, [*input_files])
     
     assert result.exit_code == 0
     # assert "input_path cannot be empty" in result.output
