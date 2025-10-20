@@ -35,6 +35,31 @@ def create_directory(output_path, relative_path):
     os.makedirs(directory_path, exist_ok=True)
 
 
+def collect_files_from_directory(directory, extension, recursive=False):
+    """Collect files with the specified extension from a directory.
+
+    Parameters:
+    directory (str): The directory path to search.
+    extension (str): The file extension to filter (e.g., '.ipynb').
+    recursive (bool): Whether to search recursively in subdirectories.
+
+    Returns:
+    list: A list of file paths matching the extension.
+    """
+    files = []
+    if recursive:
+        for root, dirs, filenames in os.walk(directory):
+            for filename in filenames:
+                if filename.endswith(extension):
+                    files.append(os.path.join(root, filename))
+    else:
+        for item in os.listdir(directory):
+            item_path = os.path.join(directory, item)
+            if os.path.isfile(item_path) and item.endswith(extension):
+                files.append(item_path)
+    return files
+
+
 def convert_file(
     input_path,
     output_path,
@@ -117,6 +142,12 @@ def convert_file(
     default=None,
     help="Output path where to generate the .qmd files (default: current directory)",
 )
+@click.option(
+    "-r",
+    "--recursive",
+    is_flag=True,
+    help="Search files recursively when input is a directory",
+)
 @click.version_option(version=__version__, prog_name="Quarto Batch Converter")
 @click.pass_context
 def convert_files(
@@ -127,6 +158,7 @@ def convert_files(
     prefix,
     keep_extension,
     output_path,
+    recursive,
 ):
     """
     Convert files with specified extension and filtered by regex pattern using Quarto.
@@ -167,12 +199,17 @@ def convert_files(
     # Handle multiple input paths: directories, files, or glob patterns
     base_input_path = "."
 
-    # filter the files with the correct extension
-    files = [
-        path
-        for path in input_paths
-        if os.path.isfile(path) and path.endswith(input_extension)
-    ]
+    # Collect files from input paths (files, directories, or already-expanded globs)
+    files = []
+    for path in input_paths:
+        if os.path.isfile(path) and path.endswith(input_extension):
+            # Direct file path
+            files.append(path)
+        elif os.path.isdir(path):
+            # Directory path - collect files based on recursive flag
+            dir_files = collect_files_from_directory(path, input_extension, recursive)
+            files.extend(dir_files)
+        # else: path might be from shell glob expansion that doesn't exist anymore, skip it
 
     # Check if any files were found
     if not files:
