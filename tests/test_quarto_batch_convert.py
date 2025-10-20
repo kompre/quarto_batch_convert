@@ -180,11 +180,120 @@ def test_output_path(setup_teardown_test_env):
     runner = CliRunner()
     test_dir = setup_teardown_test_env
     output_dir = os.path.join(test_dir, "output")
-    
+
     input_file = os.path.join(test_dir, "notebooks/_test_1.ipynb")
     result = runner.invoke(convert_files, [input_file, "-o", output_dir])
-    
+
     file_name, _ = os.path.splitext(os.path.basename(input_file))
-    
+
     assert result.exit_code == 0
     assert os.path.exists(os.path.join(output_dir, os.path.dirname(input_file), file_name + ".qmd"))
+
+def test_recursive_option_with_nested_directory():
+    """Test that the --recursive option processes files in subdirectories."""
+    runner = CliRunner()
+    test_dir = "tests/assets"
+    output_dir = "temp_recursive_test_output"
+
+    # Clean up output directory before test
+    shutil.rmtree(output_dir, ignore_errors=True)
+
+    try:
+        # Run with recursive flag
+        result = runner.invoke(convert_files, [test_dir, "-r", "-o", output_dir])
+
+        assert result.exit_code == 0
+
+        # Check that files from root directory were converted
+        assert os.path.exists(os.path.join(output_dir, test_dir, "__test.qmd"))
+
+        # Check that files from nested directory were converted
+        assert os.path.exists(os.path.join(output_dir, test_dir, "nested", "__test3.qmd"))
+
+        # Verify multiple files were found and converted
+        assert "Found" in result.output
+        # Should find __test.ipynb and nested/__test3.ipynb (2 files)
+        assert "2 file(s)" in result.output or "files" in result.output
+    finally:
+        # Cleanup
+        shutil.rmtree(output_dir, ignore_errors=True)
+
+def test_non_recursive_option_ignores_subdirectories():
+    """Test that without --recursive option, subdirectories are ignored."""
+    runner = CliRunner()
+    test_dir = "tests/assets"
+    output_dir = "temp_non_recursive_test_output"
+
+    # Clean up output directory before test
+    shutil.rmtree(output_dir, ignore_errors=True)
+
+    try:
+        # Run WITHOUT recursive flag
+        result = runner.invoke(convert_files, [test_dir, "-o", output_dir])
+
+        assert result.exit_code == 0
+
+        # Check that file from root directory was converted
+        assert os.path.exists(os.path.join(output_dir, test_dir, "__test.qmd"))
+
+        # Check that files from nested directory were NOT converted
+        assert not os.path.exists(os.path.join(output_dir, test_dir, "nested", "__test3.qmd"))
+
+        # Should only find __test.ipynb (1 file)
+        assert "1 file(s)" in result.output or "file" in result.output
+    finally:
+        # Cleanup
+        shutil.rmtree(output_dir, ignore_errors=True)
+
+def test_recursive_with_match_pattern():
+    """Test that --recursive works correctly with match patterns."""
+    runner = CliRunner()
+    test_dir = "tests/assets"
+    output_dir = "temp_recursive_match_test_output"
+
+    # Clean up output directory before test
+    shutil.rmtree(output_dir, ignore_errors=True)
+
+    try:
+        # Run with recursive flag and match pattern
+        result = runner.invoke(convert_files, [test_dir, "-r", "-o", output_dir, "-m", "__test3"])
+
+        assert result.exit_code == 0
+
+        # Only __test3.ipynb from nested directory should match
+        assert os.path.exists(os.path.join(output_dir, test_dir, "nested", "__test3.qmd"))
+
+        # __test.ipynb from root should NOT be converted (doesn't match pattern)
+        assert not os.path.exists(os.path.join(output_dir, test_dir, "__test.qmd"))
+
+        # Should only find 1 file matching the pattern
+        assert "1 file(s)" in result.output
+    finally:
+        # Cleanup
+        shutil.rmtree(output_dir, ignore_errors=True)
+
+def test_recursive_preserves_directory_structure():
+    """Test that --recursive option preserves the directory structure in output."""
+    runner = CliRunner()
+    test_dir = "tests/assets"
+    output_dir = "temp_recursive_structure_test_output"
+
+    # Clean up output directory before test
+    shutil.rmtree(output_dir, ignore_errors=True)
+
+    try:
+        # Run with recursive flag
+        result = runner.invoke(convert_files, [test_dir, "-r", "-o", output_dir])
+
+        assert result.exit_code == 0
+
+        # Verify directory structure is preserved
+        assert os.path.isdir(os.path.join(output_dir, test_dir))
+        assert os.path.isdir(os.path.join(output_dir, test_dir, "nested"))
+
+        # Check files are in correct locations
+        assert os.path.exists(os.path.join(output_dir, test_dir, "__test.qmd"))
+        assert os.path.exists(os.path.join(output_dir, test_dir, "nested", "__test3.qmd"))
+    finally:
+        # Cleanup
+        shutil.rmtree(output_dir, ignore_errors=True)
