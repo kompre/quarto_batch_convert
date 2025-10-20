@@ -5,13 +5,21 @@ import time
 import click
 import concurrent.futures
 import re
+from typing import List, Optional
+from pathlib import Path
 
 from .version import __version__
 
 
-def check_quarto_installation():
-    """
-    Check if Quarto CLI is installed.
+def check_quarto_installation() -> None:
+    """Check if Quarto CLI is installed and exit if not found.
+
+    This function verifies that the Quarto CLI tool is available in the system PATH.
+    If Quarto is not installed, it prints installation instructions and exits the program
+    with code 1.
+
+    Raises:
+        SystemExit: Always exits with code 1 if Quarto is not installed.
     """
     if not shutil.which("quarto"):
         print(
@@ -24,27 +32,35 @@ def check_quarto_installation():
         exit(1)
 
 
-def create_directory(output_path, relative_path):
+def create_directory(output_path: str, relative_path: str) -> None:
     """Create the directory at the given path if it doesn't exist.
 
-    Parameters:
-    output_path (str): The base path for the output directory.
-    relative_path (str): The relative path of the directory to be created.
+    This function combines the output path and relative path to create
+    a directory structure, creating intermediate directories as needed.
+
+    Args:
+        output_path: The base path for the output directory.
+        relative_path: The relative path of the directory to be created.
     """
     directory_path = os.path.join(output_path, relative_path)
     os.makedirs(directory_path, exist_ok=True)
 
 
-def collect_files_from_directory(directory, extension, recursive=False):
+def collect_files_from_directory(
+    directory: str, extension: str, recursive: bool = False
+) -> List[str]:
     """Collect files with the specified extension from a directory.
 
-    Parameters:
-    directory (str): The directory path to search.
-    extension (str): The file extension to filter (e.g., '.ipynb').
-    recursive (bool): Whether to search recursively in subdirectories.
+    This function searches for files with a specific extension either in a single
+    directory or recursively through all subdirectories.
+
+    Args:
+        directory: The directory path to search.
+        extension: The file extension to filter (e.g., '.ipynb').
+        recursive: Whether to search recursively in subdirectories. Defaults to False.
 
     Returns:
-    list: A list of file paths matching the extension.
+        A list of file paths matching the extension.
     """
     files = []
     if recursive:
@@ -61,25 +77,30 @@ def collect_files_from_directory(directory, extension, recursive=False):
 
 
 def convert_file(
-    input_path,
-    output_path,
-    prefix,
-    keep_extension,
-    file,
-    match_pattern,
-    replace_pattern,
-    output_extension,
-):
-    """Convert a file from ipynb to qmd using Quarto.
+    input_path: str,
+    output_path: str,
+    prefix: str,
+    keep_extension: bool,
+    file: str,
+    match_pattern: Optional[str],
+    replace_pattern: Optional[str],
+    output_extension: str,
+) -> None:
+    """Convert a file using Quarto CLI.
 
-    Parameters:
-    input_path (str): The base path of the input files.
-    output_path (str): The base path of the output files.
-    prefix (str): The prefix to add to the new file name.
-    keep_extension (bool): Whether to keep the original extension as part of the filename.
-    file (str): The full path of the file to be converted.
-    match_pattern (str): The regex pattern to match filenames.
-    replace_pattern (str, optional): The replacement pattern for the match. Defaults to None.
+    This function converts a single file (e.g., .ipynb to .qmd or vice versa) using
+    the Quarto CLI tool. It handles directory structure preservation, filename
+    transformations via regex patterns, and prefix additions.
+
+    Args:
+        input_path: The base path of the input files.
+        output_path: The base path of the output files.
+        prefix: The prefix to add to the new file name.
+        keep_extension: Whether to keep the original extension as part of the filename.
+        file: The full path of the file to be converted.
+        match_pattern: The regex pattern to match filenames for replacement.
+        replace_pattern: The replacement pattern for the match. Can be None.
+        output_extension: The extension for the output file (e.g., '.qmd', '.ipynb').
     """
     dirname = os.path.dirname(file)
     relative_path = os.path.relpath(dirname, input_path) if dirname else input_path
@@ -151,27 +172,43 @@ def convert_file(
 @click.version_option(version=__version__, prog_name="Quarto Batch Converter")
 @click.pass_context
 def convert_files(
-    ctx,
-    input_paths,
-    qmd_to_ipynb,
-    match_replace_pattern,
-    prefix,
-    keep_extension,
-    output_path,
-    recursive,
-):
-    """
-    Convert files with specified extension and filtered by regex pattern using Quarto.
+    ctx: click.Context,
+    input_paths: tuple,
+    qmd_to_ipynb: bool,
+    match_replace_pattern: Optional[str],
+    prefix: str,
+    keep_extension: bool,
+    output_path: Optional[str],
+    recursive: bool,
+) -> None:
+    """Convert files with specified extension using Quarto CLI.
 
-    INPUT_PATHS: One or more files or glob patterns to search for files to convert.
-    
-        Examples:   \n
-        - qbc . \n
-        - qbc file1.ipynb file2.ipynb   \n
-        - qbc "*.ipynb" \n
-        - qbc notebooks/* specific_file.ipynb   \n
-        - qbc "notebooks/**/*.ipynb"    \n
+    This is the main CLI command that processes one or more input files or directories,
+    optionally filtering by regex patterns, and converts them using Quarto. The function
+    supports both .ipynb to .qmd conversion (default) and .qmd to .ipynb conversion.
 
+    Args:
+        ctx: Click context object for command execution.
+        input_paths: One or more files, directories, or glob patterns to search for files to convert.
+        qmd_to_ipynb: If True, convert .qmd to .ipynb. Otherwise, convert .ipynb to .qmd.
+        match_replace_pattern: Optional regex pattern for matching/replacing filenames.
+            Format: "MATCH/REPLACE" or just "MATCH" for filtering only.
+        prefix: String prefix to add to the new file names.
+        keep_extension: If True, keep the original extension as part of the filename.
+        output_path: Directory path where converted files will be saved. Defaults to current directory.
+        recursive: If True, search directories recursively for files to convert.
+
+    Examples:
+        Basic conversion of current directory:
+            $ qbc .
+
+        Convert specific files:
+            $ qbc file1.ipynb file2.ipynb
+
+        Use glob patterns:
+            $ qbc "*.ipynb"
+            $ qbc notebooks/* specific_file.ipynb
+            $ qbc "notebooks/**/*.ipynb"
     """
     # check that `quarto` is installed
     check_quarto_installation()
