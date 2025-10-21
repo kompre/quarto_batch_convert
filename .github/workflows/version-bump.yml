@@ -96,7 +96,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Bump version to ${{ steps.bump.outputs.new_version }}"
+            git commit -m "Bump version to ${{ steps.bump.outputs.new_version }} [skip ci]"
             git push
           fi
 
