@@ -3,38 +3,47 @@ name: Run Tests
 on:
   pull_request:
     branches: [ main ]
+  workflow_run:
+    workflows: ["Version Bump"]
+    types: [completed]
 
 permissions:
   contents: read
 
 jobs:
   test:
+    # Only run on PRs or successful version bump completions
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Check for skip ci
-        id: check-skip
+      - name: Get PR details
+        if: github.event_name == 'workflow_run'
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          if echo "$COMMIT_MSG" | grep -q "\[skip ci\]"; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "Skipping tests due to [skip ci] in commit message"
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
+          # Get PR number from the workflow run
+          PR_NUMBER=$(gh api repos/${{ github.repository }}/pulls \
+            --jq ".[] | select(.head.sha == \"${{ github.event.workflow_run.head_sha }}\") | .number" \
+            | head -1)
+
+          echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "PR number: $PR_NUMBER"
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.pull_request.head.sha }}
 
       - name: Set up Python
-        if: steps.check-skip.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version-file: ".python-version"
 
       - name: Install uv
-        if: steps.check-skip.outputs.skip != 'true'
         uses: astral-sh/setup-uv@v6
         with:
           version: "latest"
@@ -42,15 +51,12 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Install Quarto
-        if: steps.check-skip.outputs.skip != 'true'
         uses: quarto-dev/quarto-actions/setup@v2
         with:
           version: 1.8.25
 
       - name: Install dependencies
-        if: steps.check-skip.outputs.skip != 'true'
         run: uv sync --locked --all-extras --dev
 
       - name: Run tests
-        if: steps.check-skip.outputs.skip != 'true'
         run: uv run pytest tests -v

@@ -5,6 +5,10 @@ on:
     types: [labeled]
     branches: [main]
 
+concurrency:
+  group: version-bump-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   bump-version:
     # Only run if PR has at least one bump: label
@@ -98,7 +102,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Bump version to ${{ steps.bump.outputs.new_version }} [skip ci]"
+            git commit -m "Bump version to ${{ steps.bump.outputs.new_version }}"
 
             # Pull with rebase in case another workflow pushed
             git pull --rebase origin ${{ github.head_ref }}
