@@ -38,7 +38,12 @@ After merge:
 - Package is built and tested
 - Published to PyPI or TestPyPI
 - Git tag created (e.g., `v2025.9.0`)
-- GitHub Release created
+- GitHub Release created with:
+  - PR title and body as release notes
+  - Installation instructions (`pipx install quarto-batch-convert`)
+  - Links to package, PR, and documentation
+
+**Tip**: Write a clear PR description - it will become your release notes!
 
 ## Example: Patch Release to PyPI
 
