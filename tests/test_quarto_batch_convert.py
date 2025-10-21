@@ -2,7 +2,7 @@ import os
 import shutil
 import pytest
 from click.testing import CliRunner
-from quarto_batch_convert.quarto_batch_convert import convert_files
+from quarto_batch_convert.quarto_batch_convert import quarto_batch_convert
 import glob
 from contextlib import contextmanager
 from typing import Generator
@@ -78,7 +78,7 @@ def test_single_match_no_replace(setup_teardown_test_env: str) -> None:
     
     input_files = glob.glob(test_dir + "/**/*", recursive=True)
     
-    result = runner.invoke(convert_files, [*input_files, "-m", "test_2"])
+    result = runner.invoke(quarto_batch_convert, [*input_files, "-m", "test_2"])
     
     assert result.exit_code == 0
     assert "test_2.ipynb" in result.output
@@ -103,7 +103,7 @@ def test_match_and_replace_pattern(setup_teardown_test_env: str) -> None:
     
     input_file = os.path.join(test_dir, "notebooks/_test_1.ipynb")
     
-    result = runner.invoke(convert_files, [input_file, "-o", output_dir, "-m", "^_/REPLACED_"])
+    result = runner.invoke(quarto_batch_convert, [input_file, "-o", output_dir, "-m", "^_/REPLACED_"])
     
     assert result.exit_code == 0
     assert os.path.exists(os.path.join(output_dir, os.path.dirname(input_file), "REPLACED_test_1.qmd"))
@@ -120,7 +120,7 @@ def test_invalid_regex_pattern() -> None:
     an error code when an invalid pattern is provided.
     """
     runner = CliRunner()
-    result = runner.invoke(convert_files, ["./", "-m", "[invalid"])
+    result = runner.invoke(quarto_batch_convert, ["./", "-m", "[invalid"])
     
     assert result.exit_code != 0
     assert "Invalid regex pattern" in result.output
@@ -139,7 +139,7 @@ def test_no_match_found(setup_teardown_test_env: str) -> None:
     
     input_files = glob.glob(test_dir + "/**/*", recursive=True)
     
-    result = runner.invoke(convert_files, [*input_files, "-m", "non_existent_pattern"])
+    result = runner.invoke(quarto_batch_convert, [*input_files, "-m", "non_existent_pattern"])
     
     assert result.exit_code != 0
     assert "No files found matching the regex pattern" in result.output
@@ -156,7 +156,7 @@ def test_prefix_option(setup_teardown_test_env: str) -> None:
     test_dir = setup_teardown_test_env
     
     input_file = os.path.join(test_dir, "notebooks/_test_1.ipynb")
-    result = runner.invoke(convert_files, [input_file, "-p", "prefix_"])
+    result = runner.invoke(quarto_batch_convert, [input_file, "-p", "prefix_"])
     
     assert result.exit_code == 0
     assert os.path.exists(os.path.join(test_dir, "notebooks/prefix__test_1.qmd"))
@@ -175,7 +175,7 @@ def test_keep_extension_option(setup_teardown_test_env: str) -> None:
     
     input_file = os.path.join(test_dir, "file_in_root.ipynb")
     
-    result = runner.invoke(convert_files, [input_file, "-k"])
+    result = runner.invoke(quarto_batch_convert, [input_file, "-k"])
     
     assert result.exit_code == 0
     assert os.path.exists(os.path.join(os.path.dirname(input_file), "file_in_root.ipynb.qmd"))
@@ -193,7 +193,7 @@ def test_convert_qmd_to_ipynb(setup_teardown_test_env: str) -> None:
     test_dir = setup_teardown_test_env
     input_file = os.path.join(test_dir, "notebooks", "TEST.qmd")
 
-    result = runner.invoke(convert_files, [input_file, "-q"])
+    result = runner.invoke(quarto_batch_convert, [input_file, "-q"])
     
     assert result.exit_code == 0
     assert os.path.exists(os.path.join(os.path.dirname(input_file), "TEST.ipynb"))
@@ -213,7 +213,7 @@ def test_file_in_cwd(setup_teardown_test_env: str) -> None:
     
     with change_dir(test_dir):
         input_files = glob.glob("*", recursive=True)
-        result = runner.invoke(convert_files, [*input_files])
+        result = runner.invoke(quarto_batch_convert, [*input_files])
     
     assert result.exit_code == 0
     # assert "input_path cannot be empty" in result.output
@@ -232,7 +232,7 @@ def test_prefix_to_new_dir(setup_teardown_test_env: str) -> None:
     
     input_file = os.path.join(test_dir, "notebooks/_test_1.ipynb")
     input_prefix = "PREFIX/"
-    result = runner.invoke(convert_files, [input_file, "-p", input_prefix])
+    result = runner.invoke(quarto_batch_convert, [input_file, "-p", input_prefix])
     file_name, _ = os.path.splitext(os.path.basename(input_file))
     
     assert result.exit_code == 0
@@ -252,7 +252,7 @@ def test_prefix_to_nested_dir(setup_teardown_test_env: str) -> None:
     
     input_file = os.path.join(test_dir, "notebooks/_test_1.ipynb")
     input_prefix = "../PREFIX/"
-    result = runner.invoke(convert_files, [input_file, "-p", input_prefix])
+    result = runner.invoke(quarto_batch_convert, [input_file, "-p", input_prefix])
     file_name, _ = os.path.splitext(os.path.basename(input_file))
     
     assert result.exit_code == 0
@@ -272,7 +272,7 @@ def test_output_path(setup_teardown_test_env: str) -> None:
     output_dir = os.path.join(test_dir, "output")
 
     input_file = os.path.join(test_dir, "notebooks/_test_1.ipynb")
-    result = runner.invoke(convert_files, [input_file, "-o", output_dir])
+    result = runner.invoke(quarto_batch_convert, [input_file, "-o", output_dir])
 
     file_name, _ = os.path.splitext(os.path.basename(input_file))
 
@@ -294,7 +294,7 @@ def test_recursive_option_with_nested_directory() -> None:
 
     try:
         # Run with recursive flag
-        result = runner.invoke(convert_files, [test_dir, "-r", "-o", output_dir])
+        result = runner.invoke(quarto_batch_convert, [test_dir, "-r", "-o", output_dir])
 
         assert result.exit_code == 0
 
@@ -327,7 +327,7 @@ def test_non_recursive_option_ignores_subdirectories() -> None:
 
     try:
         # Run WITHOUT recursive flag
-        result = runner.invoke(convert_files, [test_dir, "-o", output_dir])
+        result = runner.invoke(quarto_batch_convert, [test_dir, "-o", output_dir])
 
         assert result.exit_code == 0
 
@@ -358,7 +358,7 @@ def test_recursive_with_match_pattern() -> None:
 
     try:
         # Run with recursive flag and match pattern
-        result = runner.invoke(convert_files, [test_dir, "-r", "-o", output_dir, "-m", "__test3"])
+        result = runner.invoke(quarto_batch_convert, [test_dir, "-r", "-o", output_dir, "-m", "__test3"])
 
         assert result.exit_code == 0
 
@@ -389,7 +389,7 @@ def test_recursive_preserves_directory_structure() -> None:
 
     try:
         # Run with recursive flag
-        result = runner.invoke(convert_files, [test_dir, "-r", "-o", output_dir])
+        result = runner.invoke(quarto_batch_convert, [test_dir, "-r", "-o", output_dir])
 
         assert result.exit_code == 0
 

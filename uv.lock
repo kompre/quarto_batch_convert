@@ -81,7 +81,7 @@ wheels = [
 
 [[package]]
 name = "quarto-batch-convert"
-version = "2025.9.1rc5"
+version = "2025.9.1"
 source = { editable = "." }
 dependencies = [
     { name = "click" },

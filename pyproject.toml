@@ -1,6 +1,6 @@
 [project]
 name = "quarto-batch-convert"
-version = "2025.9.1rc5"
+version = "2025.9.1"
 description = "Converts multiple Jupyter notebooks to Quarto documents at once"
 readme = "README.md"
 license = "MIT"
@@ -23,7 +23,7 @@ dev = [
 
 [project.scripts]
 quarto-batch-convert = "quarto_batch_convert.quarto_batch_convert:convert_files"
-qbc = "quarto_batch_convert.quarto_batch_convert:convert_files"
+qbc = "quarto_batch_convert.quarto_batch_convert:quarto_batch_convert"
 
 [build-system]
 requires = ["uv_build>=0.8.9,<0.9.0"]
