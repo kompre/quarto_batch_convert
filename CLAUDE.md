@@ -108,6 +108,44 @@ Applied to PRs to indicate semantic version increment:
 - `bump:stable` - Remove pre-release suffix
 - `bump:alpha`, `bump:beta`, `bump:rc`, `bump:post`, `bump:dev` - Pre-release versions
 
+## Release Workflow
+
+The project uses an automated release workflow triggered by PR labels. See `.github/RELEASE.md` for complete documentation.
+
+### Quick Release Guide
+
+1. **Create PR** targeting `main` with your changes
+2. **Add version bump label(s)**:
+   - `bump:patch` - Bug fixes (2025.8.11 → 2025.8.12)
+   - `bump:minor` - New features (2025.8.11 → 2025.9.0)
+   - `bump:major` - Breaking changes (2025.8.11 → 2026.0.0)
+   - Multiple labels allowed (applied sequentially)
+3. **Add release type label**:
+   - `release` - Publish to PyPI (production)
+   - `test-release` - Publish to TestPyPI (testing only)
+4. **Wait for checks** to pass (test + version-bump workflows)
+5. **Merge PR** - Automatic publishing happens after merge
+
+### Workflow Files
+
+- `.github/workflows/version-bump.yml` - Automatically bumps version in PR based on labels
+- `.github/workflows/release.yml` - Builds, tests, publishes package, creates tag and GitHub Release
+- `.github/workflows/test.yml` - Runs tests on PRs (required check)
+
+### Post-merge Actions
+
+After merging a PR with release labels:
+- Package built and published to PyPI/TestPyPI
+- Git tag created (e.g., `v2025.9.0`)
+- GitHub Release created with PR reference
+- Test releases marked as pre-release
+
+### Configuration Notes
+
+- **PyPI Trusted Publishing** must be configured for both `pypi` and `testpypi` environments
+- **GitHub Environments** (`pypi`, `testpypi`) must exist in repository settings
+- **Branch Protection** on `main` should require: `test` and `bump-version` status checks
+
 ## Task Planning and Management
 
 ### `_todo` Directory Structure
