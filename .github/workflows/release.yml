@@ -13,6 +13,9 @@ jobs:
       should-release: ${{ steps.check.outputs.release }}
       is-test: ${{ steps.check.outputs.test }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Check for release labels
         id: check
         env:
