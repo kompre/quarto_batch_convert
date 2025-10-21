@@ -35,8 +35,20 @@
 - ✅ Created `.github/RELEASE.md` documentation
 - ✅ Updated `CLAUDE.md` with release workflow section
 
+#### Bug Fixes (Post-merge)
+- 🐛 Fixed version bump workflow to apply multiple bumps in single command
+  - Issue: PR #11 had 3 workflow runs (one per label) all failing
+  - Root cause: Workflow triggered on `synchronize` + bumps applied sequentially
+  - Solution: Removed `synchronize` trigger, build single `uv version --bump x --bump y` command
+  - Commit: 025ada7
+- 🐛 Fixed release workflow missing checkout step
+  - Issue: `gh pr view` failed with "not a git repository"
+  - Solution: Added checkout step before checking labels
+  - Commit: 9fdef71
+- ✅ Both fixes merged to `dev` via PR #13
+
 #### Next Steps
-- Create test PR to validate version-bump workflow
+- Test version bump workflow on a test PR
 - Configure GitHub Environments (pypi, testpypi)
 - Configure PyPI Trusted Publishing
 - Test release to TestPyPI

@@ -40,6 +40,8 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Get current version
         id: current-version
@@ -96,7 +98,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Bump version to ${{ steps.bump.outputs.new_version }}"
+            git commit -m "Bump version to ${{ steps.bump.outputs.new_version }} [skip ci]"
             git push
           fi
 
