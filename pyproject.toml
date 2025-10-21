@@ -1,6 +1,6 @@
 [project]
 name = "quarto-batch-convert"
-version = "2025.9.1rc1"
+version = "2025.9.1rc2"
 description = "Converts multiple Jupyter notebooks to Quarto documents at once"
 readme = "README.md"
 license = "MIT"
