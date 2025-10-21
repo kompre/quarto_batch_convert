@@ -3,40 +3,20 @@ name: Run Tests
 on:
   pull_request:
     branches: [ main ]
-  workflow_run:
-    workflows: ["Version Bump"]
-    types: [completed]
+
+concurrency:
+  group: test-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   test:
-    # Only run on PRs or successful version bump completions
-    if: |
-      github.event_name == 'pull_request' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get PR details
-        if: github.event_name == 'workflow_run'
-        id: pr
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # Get PR number from the workflow run
-          PR_NUMBER=$(gh api repos/${{ github.repository }}/pulls \
-            --jq ".[] | select(.head.sha == \"${{ github.event.workflow_run.head_sha }}\") | .number" \
-            | head -1)
-
-          echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          echo "PR number: $PR_NUMBER"
-
-      - name: Checkout PR branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.event.pull_request.head.sha }}
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
