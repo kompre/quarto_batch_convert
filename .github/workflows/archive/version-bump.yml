@@ -1,3 +1,50 @@
+# ARCHIVED - Version Bump Workflow
+#
+# This workflow was archived because of fundamental GitHub Actions limitations:
+#
+# Problem 1: GITHUB_TOKEN commits don't trigger other workflows
+# - Commits made with secrets.GITHUB_TOKEN deliberately don't trigger workflows
+#   (GitHub's safeguard against infinite loops)
+# - After version bump commits, test workflow never runs
+# - Branch protection waits for 'test' check that never comes
+# - Auto-merge blocked indefinitely
+#
+# Problem 2: workflow_run doesn't report status to PR
+# - Tried using workflow_run to trigger tests after version bump
+# - workflow_run executes in main branch context, not PR context
+# - Status checks created are for wrong commit SHA
+# - Branch protection on PR can't see these checks
+#
+# Problem 3: Multiple workflow runs with labels
+# - Adding multiple labels (e.g., bump:rc + test-release) triggers separate runs
+# - Even with concurrency control, cancellation happens after work starts
+# - Results in duplicate version bump commits before cancellation
+#
+# Attempted Solutions That Failed:
+# - [skip ci] in commit message (doesn't work, workflow never triggers anyway)
+# - workflow_run trigger (runs in wrong context, status not reported to PR)
+# - Concurrency control (helps but doesn't prevent all duplicates)
+# - Manual status check via API (hacky, doesn't actually re-test)
+#
+# Working Solutions (not implemented here):
+# Option A: Use GitHub App or PAT instead of GITHUB_TOKEN
+#   - Commits from app/PAT DO trigger workflows
+#   - Requires creating GitHub App or storing PAT as secret
+#   - Industry standard solution (used by Renovate, Dependabot, etc.)
+#
+# Option B: Manual version bumping (CHOSEN)
+#   - Run `uv version --bump <type>` manually
+#   - Commit to PR branch
+#   - Simple, reliable, no workflow complexity
+#   - Trade-off: one manual step for simplicity
+#
+# This workflow is preserved for future reference if we decide to implement
+# Option A (GitHub App/PAT) for full automation.
+#
+# Last used: 2025-10-21
+# Archived by: Claude Code
+# Related: _todo/proposal/fix-workflow-status-reporting.md
+
 name: Version Bump
 
 on:
