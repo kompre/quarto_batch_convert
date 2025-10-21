@@ -56,6 +56,11 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
 
+      - name: Install Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.8.25
+
       - name: Install dependencies
         run: uv sync --locked --all-extras --dev
 
