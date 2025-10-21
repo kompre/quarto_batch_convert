@@ -1,0 +1,106 @@
+name: Version Bump
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+    branches: [main]
+
+jobs:
+  bump-version:
+    # Only run if PR has at least one bump: label
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'bump:major') ||
+      contains(github.event.pull_request.labels.*.name, 'bump:minor') ||
+      contains(github.event.pull_request.labels.*.name, 'bump:patch') ||
+      contains(github.event.pull_request.labels.*.name, 'bump:stable') ||
+      contains(github.event.pull_request.labels.*.name, 'bump:alpha') ||
+      contains(github.event.pull_request.labels.*.name, 'bump:beta') ||
+      contains(github.event.pull_request.labels.*.name, 'bump:rc') ||
+      contains(github.event.pull_request.labels.*.name, 'bump:post') ||
+      contains(github.event.pull_request.labels.*.name, 'bump:dev')
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "latest"
+
+      - name: Get current version
+        id: current-version
+        run: |
+          CURRENT_VERSION=$(uv version --short)
+          echo "version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+          echo "Current version: ${CURRENT_VERSION}"
+
+      - name: Apply version bumps
+        id: bump
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get all labels on the PR
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name')
+
+          # Extract bump labels in order of precedence
+          BUMP_TYPES=()
+
+          for label in major minor patch stable alpha beta rc post dev; do
+            if echo "$LABELS" | grep -q "^bump:${label}$"; then
+              BUMP_TYPES+=("$label")
+            fi
+          done
+
+          if [ ${#BUMP_TYPES[@]} -eq 0 ]; then
+            echo "No bump labels found, skipping version bump"
+            exit 0
+          fi
+
+          echo "Applying bumps: ${BUMP_TYPES[*]}"
+
+          # Apply each bump sequentially
+          for bump_type in "${BUMP_TYPES[@]}"; do
+            echo "Bumping: $bump_type"
+            uv version --bump "$bump_type"
+          done
+
+          NEW_VERSION=$(uv version --short)
+          echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "New version: ${NEW_VERSION}"
+
+      - name: Commit version bump
+        if: steps.bump.outputs.new_version != ''
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add pyproject.toml uv.lock
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Bump version to ${{ steps.bump.outputs.new_version }}"
+            git push
+          fi
+
+      - name: Comment on PR
+        if: steps.bump.outputs.new_version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body \
+            "✅ Version bumped: \`${{ steps.current-version.outputs.version }}\` → \`${{ steps.bump.outputs.new_version }}\`"

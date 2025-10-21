@@ -1,5 +1,50 @@
 # New Release Workflow
 
+**Status**: In Progress
+**Branch**: `feature/automated-release-workflow`
+**Started**: 2025-10-21
+
+## Progress Log
+
+### 2025-10-21
+
+#### Initial Setup
+- Proposal approved and moved to pending phase
+- Created feature branch `feature/automated-release-workflow`
+- Decisions finalized:
+  - Manual PR approval (no auto-merge requirement)
+  - Multiple bump labels allowed (applied sequentially)
+  - Deprecate `python-publish.yml` entirely
+  - No additional environment approvals beyond PR
+  - Use PR descriptions for changelog (no automation)
+  - Continue with CalVer versioning
+
+#### Phase 1 & 2 Implementation (Completed)
+- ✅ Verified all required labels exist in repository (11 bump labels + 2 release labels)
+- ✅ Created `.github/workflows/version-bump.yml`
+  - Triggers on PR label events
+  - Applies version bumps sequentially
+  - Commits changes back to PR branch
+  - Posts version change comment
+- ✅ Created `.github/workflows/release.yml`
+  - Checks for release labels on merged PRs
+  - Builds and tests package
+  - Publishes to PyPI or TestPyPI
+  - Creates git tag and GitHub Release
+- ✅ Deleted deprecated `.github/workflows/python-publish.yml`
+- ✅ Created `.github/RELEASE.md` documentation
+- ✅ Updated `CLAUDE.md` with release workflow section
+
+#### Next Steps
+- Create test PR to validate version-bump workflow
+- Configure GitHub Environments (pypi, testpypi)
+- Configure PyPI Trusted Publishing
+- Test release to TestPyPI
+- Configure branch protection rules
+- Test production release to PyPI
+
+---
+
 ## Original Objective
 We should move toward branch protection and automate release.
 
@@ -415,15 +460,12 @@ Both PyPI and TestPyPI need to be configured for trusted publishing:
    - Workflow: `release.yml`
    - Environment: `pypi` (or `testpypi`)
 
-### Step 6: Update Existing python-publish.yml
-**Decision needed**: Keep or deprecate the existing `python-publish.yml`?
+### Step 6: Remove Existing python-publish.yml
+**Decision**: Deprecate the existing `python-publish.yml` workflow entirely.
 
-**Options:**
-1. **Keep for manual releases**: Useful for emergency releases or manual tag-based releases
-2. **Deprecate entirely**: Remove to enforce PR-based release workflow only
-3. **Rename to legacy**: Keep but rename to `manual-release.yml` for clarity
+**Action**: Delete `.github/workflows/python-publish.yml` to enforce PR-based release workflow only.
 
-**Recommendation**: Rename to `manual-release.yml` and update to only trigger on manual `workflow_dispatch`, keeping it as a fallback.
+**Rationale**: The new release workflow provides all necessary functionality. Keeping the old workflow could cause confusion or accidental releases.
 
 ### Step 7: Documentation
 
@@ -549,43 +591,33 @@ After merge:
 - [ ] Successfully complete a test release to TestPyPI
 - [ ] Successfully complete a production release to PyPI
 
-## Questions/Decisions Needed
+## Decisions
 
 1. **Branch Protection Strictness**:
-   - Require approvals before merge? How many?
-   - **Recommendation**: At least 1 approval for production releases
-
-<!-- I will approve manually the pr to merge, or toggle the auto merge -->
+   - **Decision**: User will manually approve PRs or toggle auto-merge
+   - **Implementation**: Configure branch protection to require 1 approval (can be bypassed by repo admin)
 
 2. **Version Bump Conflict Resolution**:
-   - What happens if multiple incompatible bump labels are added (e.g., both `bump:major` and `bump:patch`)?
-   - **Current approach**: Apply in sequence (major, then patch), but should we enforce single bump label?
-   - **Recommendation**: Apply in precedence order, but warn in PR comment if multiple found
-
-<!-- if multiple version are applied together i.e. `uv version --bump rc --bump major` order does not matter. It really depends when the workflow trigger: if it trigger at when first label get added, then user shall be responsible for correct order; else if both labels get applied in the same triggered workflow, then does not matter -->
+   - **Decision**: Allow multiple bump labels; they will be applied in sequence
+   - **Behavior**: Workflow triggers on label events, applies all present bump labels in order (major, minor, patch, stable, alpha, beta, rc, post, dev)
+   - **Note**: Order matters only if labels are added separately (triggering workflow multiple times). If added together, all bumps apply in single workflow run.
 
 3. **Existing python-publish.yml**:
-   - Keep, deprecate, or rename?
-   - **Recommendation**: Rename to `manual-release.yml` as fallback
-
-<!-- it can be deprecated -->
+   - **Decision**: Deprecate the existing `python-publish.yml` workflow
+   - **Implementation**: Remove the file entirely to enforce PR-based release workflow only
 
 4. **TestPyPI vs PyPI Environment Protection**:
-   - Should TestPyPI require approvals?
-   - **Recommendation**: No approvals for TestPyPI, optional for PyPI
-
-<!-- what do you mean? other approval than the pr approval? -->
+   - **Decision**: No additional environment approvals beyond PR approval
+   - **Clarification**: GitHub Environments can require separate approval for deployment (independent of PR approval). We will NOT use this feature - PR approval is sufficient.
+   - **Implementation**: Create environments without required reviewers
 
 5. **Automated Changelog**:
-   - Should we add automatic changelog generation?
-   - **Recommendation**: Consider in future iteration, use PR descriptions for now
-
-<!-- use pr description for now -->
+   - **Decision**: Use PR descriptions for release notes (no automated changelog generation)
+   - **Implementation**: Manual changelog updates in PR body, which can be referenced in GitHub Release notes
 
 6. **Version Scheme**:
-   - Current: CalVer (YYYY.M.D)
-   - Should we support SemVer as alternative?
-   - **Recommendation**: Stay with current CalVer, bump types still work
+   - **Decision**: Continue using current CalVer (YYYY.M.D) scheme
+   - **Note**: All bump types still work with CalVer (patch increments day, minor increments month, etc.)
 
 ## Estimated Complexity
 **High** - Complex multi-workflow system with dependencies, branch protection, and external integrations (PyPI). Requires careful testing and likely multiple iterations.
