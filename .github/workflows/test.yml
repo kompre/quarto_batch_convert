@@ -13,13 +13,28 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for skip ci
+        id: check-skip
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if echo "$COMMIT_MSG" | grep -q "\[skip ci\]"; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Skipping tests due to [skip ci] in commit message"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Set up Python
+        if: steps.check-skip.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version-file: ".python-version"
 
       - name: Install uv
+        if: steps.check-skip.outputs.skip != 'true'
         uses: astral-sh/setup-uv@v6
         with:
           version: "latest"
@@ -27,12 +42,15 @@ jobs:
           cache-dependency-glob: "uv.lock"
 
       - name: Install Quarto
+        if: steps.check-skip.outputs.skip != 'true'
         uses: quarto-dev/quarto-actions/setup@v2
         with:
           version: 1.8.25
 
       - name: Install dependencies
+        if: steps.check-skip.outputs.skip != 'true'
         run: uv sync --locked --all-extras --dev
 
       - name: Run tests
+        if: steps.check-skip.outputs.skip != 'true'
         run: uv run pytest tests -v
