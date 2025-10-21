@@ -1,8 +1,7 @@
 name: Release
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -13,7 +12,6 @@ on:
 
 jobs:
   check-release-label:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     outputs:
       should-release: ${{ steps.check.outputs.release }}
@@ -27,11 +25,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Get PR number from event or input
+          # Get PR number from event or commit message
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             PR_NUMBER=${{ inputs.pr_number }}
           else
-            PR_NUMBER=${{ github.event.pull_request.number }}
+            # Extract PR number from merge commit message
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+            PR_NUMBER=$(echo "$COMMIT_MSG" | grep -oP '(?<=#)\d+(?=\))' | head -1)
+
+            if [ -z "$PR_NUMBER" ]; then
+              echo "No PR number found in commit message, skipping release"
+              echo "release=false" >> $GITHUB_OUTPUT
+              echo "test=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+
+            echo "Found PR number: $PR_NUMBER"
           fi
 
           LABELS=$(gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
