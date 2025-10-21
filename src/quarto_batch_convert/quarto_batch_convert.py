@@ -7,8 +7,31 @@ import concurrent.futures
 import re
 from typing import List, Optional
 from pathlib import Path
+from importlib.metadata import version, PackageNotFoundError
 
-from .version import __version__
+def get_package_info() -> str:
+    """Get formatted package information for epilogue display."""
+    from importlib.metadata import metadata
+    try:
+        meta = metadata("quarto-batch-convert")
+        pkg_version = meta.get("Version", "unknown")
+        author = meta.get("Author", "kompre")
+        return f"quarto-batch-convert v{pkg_version} | by {author} | https://github.com/kompre/quarto_batch_convert"
+    except PackageNotFoundError:
+        return "quarto-batch-convert | https://github.com/kompre/quarto_batch_convert"
+    
+def get_epilog() -> str:
+    """Get formatted epilog with examples and package info."""
+    return f"""Examples: qbc . -r -m "^__/_"
+
+{get_package_info()}"""
+
+def get_version() -> str:
+    """Get package version from metadata."""
+    try:
+        return version("quarto-batch-convert")
+    except PackageNotFoundError:
+        return "unknown"
 
 
 def check_quarto_installation() -> None:
@@ -131,7 +154,11 @@ def convert_file(
     subprocess.run(["quarto", "convert", file, "--output", new_file_path])
 
 
-@click.command(no_args_is_help=True)
+@click.command(
+    no_args_is_help=True,
+    epilog=get_epilog(),
+    help="Batch quarto convert multiple .ipynb to .qmd files or vice versa",
+)
 @click.argument(
     "input_paths",
     nargs=-1,
@@ -169,8 +196,30 @@ def convert_file(
     is_flag=True,
     help="Search files recursively when input is a directory",
 )
-@click.version_option(version=__version__, prog_name="Quarto Batch Converter")
+@click.version_option(version=get_version(), prog_name="Quarto Batch Converter")
 @click.pass_context
+def quarto_batch_convert(
+    ctx: click.Context,
+    input_paths: tuple,
+    qmd_to_ipynb: bool,
+    match_replace_pattern: Optional[str],
+    prefix: str,
+    keep_extension: bool,
+    output_path: Optional[str],
+    recursive: bool,
+) -> None:
+    """ CLI wrapper for convert_files - see help parameters @click.command decorator"""
+    return convert_files(
+        ctx,
+        input_paths,
+        qmd_to_ipynb,
+        match_replace_pattern,
+        prefix,
+        keep_extension,
+        output_path,
+        recursive,
+    )
+
 def convert_files(
     ctx: click.Context,
     input_paths: tuple,
@@ -306,6 +355,9 @@ def convert_files(
     print("-" * len(text))
     print(text)
     print("-" * len(text))
+
+
+
 
 
 if __name__ == "__main__":
