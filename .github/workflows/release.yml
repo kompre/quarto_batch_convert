@@ -4,10 +4,16 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to release'
+        required: true
+        type: number
 
 jobs:
   check-release-label:
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     outputs:
       should-release: ${{ steps.check.outputs.release }}
@@ -21,7 +27,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name')
+          # Get PR number from event or input
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            PR_NUMBER=${{ inputs.pr_number }}
+          else
+            PR_NUMBER=${{ github.event.pull_request.number }}
+          fi
+
+          LABELS=$(gh pr view $PR_NUMBER --json labels --jq '.labels[].name')
 
           if echo "$LABELS" | grep -q "^release$"; then
             echo "release=true" >> $GITHUB_OUTPUT
