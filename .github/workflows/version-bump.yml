@@ -99,6 +99,11 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "Bump version to ${{ steps.bump.outputs.new_version }} [skip ci]"
+
+            # Pull with rebase in case another workflow pushed
+            git pull --rebase origin ${{ github.head_ref }}
+
+            # Push changes
             git push
           fi
 
