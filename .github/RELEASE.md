@@ -13,7 +13,10 @@ Add ONE OR MORE of these labels to indicate version change:
 - `bump:stable` - Remove pre-release suffix
 - `bump:alpha`, `bump:beta`, `bump:rc`, `bump:post`, `bump:dev` - Pre-release
 
-The version-bump workflow will automatically update `pyproject.toml` and commit to your PR.
+The version-bump workflow will automatically:
+- Update `pyproject.toml` and `uv.lock`
+- Commit changes to your PR
+- Enable auto-merge (PR will merge when all checks pass)
 
 ### 3. Add Release Type Label
 Add ONE of these labels:
@@ -25,8 +28,10 @@ Required checks must pass:
 - ✅ Tests (`test.yml`)
 - ✅ Version bump (`version-bump.yml`, if bump labels present)
 
-### 5. Merge PR
-Once approved and checks pass, merge the PR.
+### 5. Wait for Auto-Merge
+The version-bump workflow enables auto-merge, so the PR will automatically merge once all required checks pass.
+
+You can also manually merge if needed via the GitHub UI.
 
 ### 6. Automatic Publishing
 After merge:
