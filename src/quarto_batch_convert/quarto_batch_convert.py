@@ -299,8 +299,8 @@ def convert_files(
 
     # Check if any files were found
     if not files:
-        click.echo("Error: No files found to process")
-        ctx.exit(1)
+        click.echo("No files found to process")
+        return
 
     if output_path is None:
         output_path = base_input_path
@@ -323,7 +323,7 @@ def convert_files(
             click.echo(f"No files found matching the regex pattern: {match_regex}")
         else:
             click.echo("No files found to process")
-        ctx.exit(1)
+        return
 
     print(f"Found {len(files)} file(s) to be converted:\n")
     print(f"\n\t{files}\n")

@@ -2,12 +2,11 @@
 
 ## Active Tasks
 
-<!-- Add tasks here. When creating a proposal, move the task description to the proposal file -->
+1. **graceful-no-files-exit** - In progress in `pending/graceful-no-files-exit.md`
 
 ## Proposed Tasks (Awaiting Review)
 
 1. **new-release-workflow** - Proposal in `proposal/new-release-workflow.md`
-2. **graceful-no-files-exit** - Proposal in `proposal/graceful-no-files-exit.md`
 
 ## Completed Tasks
 

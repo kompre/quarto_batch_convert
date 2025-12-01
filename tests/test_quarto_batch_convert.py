@@ -128,20 +128,20 @@ def test_invalid_regex_pattern() -> None:
 def test_no_match_found(setup_teardown_test_env: str) -> None:
     """Test that a non-matching pattern results in no files being processed.
 
-    Verifies that when a regex pattern matches no files, the CLI exits with
-    an error code and displays an appropriate message.
+    Verifies that when a regex pattern matches no files, the CLI exits gracefully
+    with exit code 0 and displays an appropriate message.
 
     Args:
         setup_teardown_test_env: Path to the temporary test directory.
     """
     runner = CliRunner()
     test_dir = setup_teardown_test_env
-    
+
     input_files = glob.glob(test_dir + "/**/*", recursive=True)
-    
+
     result = runner.invoke(quarto_batch_convert, [*input_files, "-m", "non_existent_pattern"])
-    
-    assert result.exit_code != 0
+
+    assert result.exit_code == 0
     assert "No files found matching the regex pattern" in result.output
     
 def test_prefix_option(setup_teardown_test_env: str) -> None:
