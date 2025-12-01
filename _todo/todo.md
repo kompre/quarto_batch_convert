@@ -7,6 +7,7 @@
 ## Proposed Tasks (Awaiting Review)
 
 1. **new-release-workflow** - Proposal in `proposal/new-release-workflow.md`
+2. **graceful-no-files-exit** - Proposal in `proposal/graceful-no-files-exit.md`
 
 ## Completed Tasks
 
