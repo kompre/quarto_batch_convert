@@ -2,7 +2,7 @@
 
 ## Active Tasks
 
-<!-- Add tasks here. When creating a proposal, move the task description to the proposal file -->
+1. **graceful-no-files-exit** - In progress in `pending/graceful-no-files-exit.md`
 
 ## Proposed Tasks (Awaiting Review)
 
